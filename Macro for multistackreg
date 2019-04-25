@@ -1,4 +1,4 @@
-I want to use multistackreg insted stackreg in my zstack project but I cannot make the line run properly in my macro
+I want to use multistackreg instead stackreg in my zstack project but I cannot make the line run properly in my macro
 I want to add something like so I can run it as a batch :
 run("MultiStackReg", "stack_1=["C1-"+ list[ i ]] action_1=[Use as Reference] file_1=[] stack_2=["C3-"+ list[ i ]] action_2=[Align to First Stack] file_2=[] transformation=[Rigid Body]");
 
