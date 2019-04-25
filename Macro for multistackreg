@@ -1,0 +1,85 @@
+I want to use multistackreg insted stackreg in my zstack project but I cannot make the line run properly in my macro
+I want to add something like so I can run it as a batch :
+run("MultiStackReg", "stack_1=["C1-"+ list[ i ]] action_1=[Use as Reference] file_1=[] stack_2=["C3-"+ list[ i ]] action_2=[Align to First Stack] file_2=[] transformation=[Rigid Body]");
+
+This is the macro.
+path    = getDirectory("Choose a Directory");
+  list    = getFileList(path);
+  length  = list.length;
+
+  File.makeDirectory(path + "ZstackFRETMAP/");
+
+  //Calculation
+
+  for (i=0; i<length; i++) {
+             
+    n=i+1;
+    open(path+list[i]);
+    img = File.nameWithoutExtension();
+    selectWindow(img+".lsm");
+   //setTool("rectangle");
+	waitForUser("Draw ROI, then hit OK");  
+	if (selectionType==-1)
+		exit("This macro requires an area selection");
+	for (j=1; j<=nSlices; j++) { // loop through slices in image
+		setSlice(j);
+		getStatistics(area, mean);
+		run("Select None");
+		run("Subtract...", "value="+mean);
+		run("Restore Selection");                
+	    } 
+run("32-bit");	    
+run("StackReg", "transformation=Translation");
+run("Split Channels");
+selectWindow("C1-"+ list[ i ]);
+run("Z Project...", "projection=[Average Intensity]");
+selectWindow("AVG_C1-"+ list[ i ]);
+run("Duplicate...", "title=cfpmask");
+setAutoThreshold("Li dark no-reset");
+run("Threshold...");
+call("ij.plugin.frame.ThresholdAdjuster.setMode", "Over/Under");
+    waitForUser("Imagen "+n+" de "+length,"Apply Threshold y click OK");
+    run("Subtract...", "value=254");
+    saveAs("Tiff", path + "ZstackFRETMAP/cfpmask 000" + i);
+imageCalculator("multiply create 32-bit", "AVG_C1-"+ list[ i ], "cfpmask 000"+i+".tif");
+selectWindow("C3-"+ list[ i ]);
+run("Z Project...", "projection=[Average Intensity]");
+selectWindow("AVG_C3-"+ list[ i ]);
+run("Duplicate...", "title=FRETYFPmask");
+setAutoThreshold("Li dark no-reset");
+run("Threshold...");
+call("ij.plugin.frame.ThresholdAdjuster.setMode", "Over/Under");
+    waitForUser("Imagen "+n+" de "+length,"Apply Threshold y click OK");
+    run("Subtract...", "value=254");
+    saveAs("Tiff", path + "ZstackFRETMAP/FRETYFPmask 000" + i);
+imageCalculator("multiply create 32-bit", "AVG_C3-"+ list[ i ], "FRETYFPmask 000"+i+".tif");
+imageCalculator("Divide create 32-bit", "Result of AVG_C3-" + list[ i ],"Result of AVG_C1-" + list[ i ]);
+selectWindow("Result of Result of AVG_C3-" + list[ i ]);
+saveAs ("Tiff", path + "ZstackFRETMAP/finalMAP" + i);
+run("Duplicate...", "title=fretmapmask");
+saveAs("Tiff", path + "ZstackFRETMAP/fretmapmask 000" + i);
+setAutoThreshold("Li dark");
+run("Threshold...");
+call("ij.plugin.frame.ThresholdAdjuster.setMode", "Red");
+waitForUser("set the threshold and press OK, or cancel to exit macro");
+run("metamorph");
+run("Median...", "radius=1");
+run("Duplicate...", " ");
+run("Brightness/Contrast...");
+setMinAndMax(0.0, 1.5);
+waitForUser("set the threshold and press OK, or cancel to exit macro");
+run("Scale Bar...", "width=50 height=8 font=28 color=Yellow background=None location=[Lower Right] bold hide overlay");
+run("Calibration Bar...", "location=[Upper Right] fill=White label=Black number=5 decimal=1 font=12 zoom=2 bold overlay");
+saveAs ("Tiff", path + "ZstackFRETMAP/Ratiomasked" + i);
+run("Flatten");
+saveAs ("Tiff", path + "ZstackFRETMAP/RatioRGB" + i);
+selectWindow("Result of C1-" + list[ i ]);
+run("Cyan");
+run("Median...", "radius=1");
+saveAs ("Tiff", path + "ZstackFRETMAP/CFP" + i);
+selectWindow("Result of C3-" + list[ i ]);
+run("NanoJ-Orange");
+run("Median...", "radius=1");
+saveAs ("Tiff", path + "ZstackFRETMAP/FRETYFP" + i);
+run("Close All");
+  }
